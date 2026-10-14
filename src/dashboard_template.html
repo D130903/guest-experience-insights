@@ -29,6 +29,13 @@
   .filters label { color: var(--text-secondary); font-size: 13px; }
   select { font: inherit; color: var(--text-primary); background: var(--surface-1);
     border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+  .takeaways { margin-top: 20px; background: var(--surface-1); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 12px; padding: 16px 20px 6px; }
+  .takeaways h3 { margin: 0 0 6px; font-size: 16px; color: var(--accent); }
+  .takeaways ol { margin: 0; padding-left: 20px; }
+  .takeaways li { margin-bottom: 8px; color: var(--text-secondary); }
+  .takeaways b { color: var(--text-primary); }
+  .how { margin: 0 0 8px; font-size: 12.5px; color: var(--accent); }
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .tile, .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
   .tile { padding: 16px 18px; border-top: 2px solid var(--accent); }
@@ -70,6 +77,17 @@
      built the way a hotel Guest Experience team would read its own feedback. Data: Inside Airbnb, Melbourne, scraped Sep 2026.</p>
 </header>
 
+<section class="takeaways">
+  <h3>5 things to know</h3>
+  <ol>
+    <li><b>Good ratings hide problems.</b> The average rating is 4.78 out of 5, yet about 1 in 17 reviews still mentions a problem.</li>
+    <li><b>Stays near Crown get more complaints:</b> 7.0% of reviews vs 5.3% in the rest of Melbourne. That's 31% more, every month.</li>
+    <li><b>Arrival is the weak spot near Crown.</b> Complaints about check-in, keys and finding the building are 73% higher there.</li>
+    <li><b>Cleanliness matters most.</b> It is common and it spoils the whole stay. Fix it first.</li>
+    <li><b>January is the hardest month</b> (summer heat and the Australian Open). Complaints about value, facilities and air conditioning all jump.</li>
+  </ol>
+</section>
+
 <div class="filters">
   <label for="segment">Segment</label>
   <select id="segment"></select>
@@ -81,13 +99,15 @@
 <div class="grid2">
   <div class="card">
     <h3>Where in the guest journey do complaints happen?</h3>
-    <p class="note">Reviews containing a complaint about each stage, per 1,000 reviews</p>
+    <p class="note">Out of every 1,000 reviews, how many complain about each part of the stay</p>
+    <p class="how">How to read: longer bar = more guests complaining about it.</p>
     <div id="journey" class="chart"></div>
     <details><summary>Show data</summary><div id="journeyTable"></div></details>
   </div>
   <div class="card">
-    <h3>Which complaints to fix first</h3>
-    <p class="note">How often a complaint appears vs how much it drags down the whole review (higher = more damaging)</p>
+    <h3>Which problems to fix first</h3>
+    <p class="note">Each dot is one part of the stay. Right = happens more often. Higher = spoils the stay more.</p>
+    <p class="how">How to read: the gold dot (top right) is common and serious, so fix it first.</p>
     <div id="priority" class="chart"></div>
   </div>
 </div>
@@ -95,36 +115,40 @@
 <h2>The Crown precinct vs the rest of Melbourne</h2>
 <p>Stays within 1.5 km of Crown Melbourne (Southbank, CBD, South Wharf) compared with the rest of the city. Use the Segment filter above to see hotel-style stays.</p>
 <div class="card">
-  <h3>Complaint rate by guest-journey stage, per 1,000 reviews</h3>
-  <p class="note">Near Crown guests complain more about arrival, sleep/noise, room comfort and parking</p>
+  <h3>Complaints near Crown (gold) vs the rest of Melbourne (blue)</h3>
+  <p class="note">Out of every 1,000 reviews, how many complain about each part of the stay</p>
+  <p class="how">How to read: where the gold bar is longer, guests near Crown complain more. The biggest gaps are arrival, parking and location.</p>
   <div id="segments" class="chart"></div>
   <details><summary>Show data</summary><div id="segmentsTable"></div></details>
 </div>
 <div class="grid2" style="margin-top:12px">
   <div class="card">
-    <h3>Share of reviews with a complaint, by month</h3>
-    <p class="note">The gap between the Crown precinct and the rest of Melbourne is persistent, not a one-off</p>
+    <h3>Reviews with a complaint, month by month</h3>
+    <p class="note">% of reviews that mention a problem</p>
+    <p class="how">How to read: the gold line (near Crown) is above the blue line in every month. Note the spike in January.</p>
     <div id="trend" class="chart"></div>
   </div>
   <div class="card">
-    <h3>Guest demand by month, Crown precinct</h3>
-    <p class="note">Average reviews per month, 2024-2025. Reviews are posted just after a stay, so they track visitor demand: it builds through the spring racing season (Oct-Dec)</p>
+    <h3>How busy each month is near Crown</h3>
+    <p class="note">Average number of reviews per month (2024-2025). More reviews = more guests.</p>
+    <p class="how">How to read: the busiest stretch is October to December, the spring racing season.</p>
     <div id="demand" class="chart"></div>
   </div>
 </div>
 
 <h2>What drives the overall star rating?</h2>
-<p>Key-driver analysis: a regression of each listing's overall rating on its six category ratings (<span id="driverN"></span> listings with 10+ reviews).</p>
+<p>Guests also rate six parts of their stay. This shows which ones move the overall star rating most (based on <span id="driverN"></span> listings with 10+ reviews).</p>
 <div class="grid2">
   <div class="card">
-    <h3>Impact on the overall rating</h3>
-    <p class="note">Standardised regression coefficient: how much the overall rating moves when a category moves</p>
+    <h3>What moves the star rating</h3>
+    <p class="note">Longer bar = bigger effect on the overall star rating</p>
+    <p class="how">How to read: accuracy, cleanliness and value matter most. Location matters least.</p>
     <div id="drivers" class="chart"></div>
     <details><summary>Show data</summary><div id="driversTable"></div></details>
   </div>
   <div class="card">
     <h3>Area scorecard</h3>
-    <p class="note">Local government areas with 1,000+ reviews in the last 24 months, sorted by complaint rate</p>
+    <p class="note">Council areas with 1,000+ reviews, best (fewest complaints) at the top. The City of Melbourne (CBD and Southbank) is at the bottom.</p>
     <div id="lgaTable" style="max-height:420px;overflow:auto"></div>
   </div>
 </div>
@@ -250,15 +274,19 @@ function priority(seg) {
     textfont: {size: 11, color: css('--text-secondary')},
     marker: {size: 12, color: xs.map((x, i) => x > xm && ys[i] > ym ? css('--series-2') : css('--series-1')),
       line: {color: css('--surface-1'), width: 2}},
-    hovertemplate: '<b>%{text}</b><br>%{x:.1f} complaints per 1,000 reviews<br>Damage score %{y:.2f}<extra></extra>',
+    hovertemplate: '<b>%{text}</b><br>%{x:.1f} complaints per 1,000 reviews<extra></extra>',
   }], baseLayout({height: 420,
-    xaxis: axis({title: {text: 'how often (complaints per 1,000 reviews)', font: {size: 11}}, zeroline: false,
+    xaxis: axis({title: {text: 'how often it happens (per 1,000 reviews)', font: {size: 11}}, zeroline: false,
       range: [Math.min(...xs) - 1.5, Math.max(...xs) + 1.5]}),
-    yaxis: axis({title: {text: 'how damaging (1 - review sentiment)', font: {size: 11}}, zeroline: false}),
+    yaxis: axis({title: {text: 'how much it spoils the stay', font: {size: 11}}, zeroline: false, showticklabels: false}),
     shapes: [{type: 'line', x0: xm, x1: xm, yref: 'paper', y0: 0, y1: 1, line: {color: css('--axis'), width: 1}},
              {type: 'line', y0: ym, y1: ym, xref: 'paper', x0: 0, x1: 1, line: {color: css('--axis'), width: 1}}],
     annotations: [{xref: 'paper', yref: 'paper', x: 1, y: 1, xanchor: 'right', yanchor: 'top', showarrow: false,
-      text: 'Fix first: frequent and damaging (gold)', font: {size: 11, color: css('--accent')}}],
+      text: 'FIX FIRST', font: {size: 12, color: css('--accent')}},
+      {xref: 'paper', x: 0, y: ym, xanchor: 'left', yanchor: 'bottom', showarrow: false,
+      text: 'Rare but serious', font: {size: 11, color: css('--muted')}},
+      {xref: 'paper', x: 1, y: ym, xanchor: 'right', yanchor: 'top', showarrow: false,
+      text: 'Common but minor', font: {size: 11, color: css('--muted')}}],
   }), CONFIG);
 }
 
@@ -314,7 +342,7 @@ function drivers() {
     text: d.map(r => r.impact.toFixed(2)), textposition: 'outside', cliponaxis: false, textfont: {color: css('--text-secondary')},
     customdata: d.map(r => [r.avg_score.toFixed(2), pct(r.pct_below_4_5)]),
     hovertemplate: '<b>Impact %{x:.2f}</b><br>%{y}<br>Average score %{customdata[0]}<br>%{customdata[1]} of listings below 4.5<extra></extra>'}],
-    baseLayout({height: 320, xaxis: axis({title: {text: 'standardised impact', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
+    baseLayout({height: 320, xaxis: axis({title: {text: 'effect on the star rating', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
   table('driversTable', DATA.drivers, [{key: 'driver', label: 'Category'},
     {key: 'impact', label: 'Impact', num: 1, fmt: v => v.toFixed(2)},
     {key: 'correlation', label: 'Correlation', num: 1, fmt: v => v.toFixed(2)},
