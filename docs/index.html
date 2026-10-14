@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Melbourne Guest Experience Insights - Voice of Guest Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  /* Always dark: black page, gold (Near Crown / emphasis) and blue (baseline) marks.
+     Mark colours validated for colour-blind separation and contrast on the #141414 card surface. */
+  .viz-root {
+    color-scheme: dark;
+    --page: #000000; --surface-1: #141414;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #8d8b85;
+    --grid: #262624; --axis: #3a3a37; --border: rgba(255,255,255,0.09);
+    --series-1: #3987e5; --series-2: #c98500;
+    --accent: #fab219; --critical: #fab219;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  header h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  header h1 span { color: var(--accent); }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+  header p { margin: 0; color: var(--text-secondary); }
+  .filters { display: flex; gap: 12px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
+  .filters label { color: var(--text-secondary); font-size: 13px; }
+  select { font: inherit; color: var(--text-primary); background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tile, .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+  .tile { padding: 16px 18px; border-top: 2px solid var(--accent); }
+  .tile .label { color: var(--text-secondary); font-size: 13px; }
+  .tile .value { font-size: 30px; font-weight: 600; margin-top: 2px; }
+  .tile .sub { color: var(--muted); font-size: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .card { padding: 18px 18px 8px; margin-top: 12px; }
+  .grid2 .card { margin-top: 0; }
+  .card h3 { margin: 0; font-size: 16px; }
+  .card .note { margin: 2px 0 6px; color: var(--text-secondary); font-size: 13px; }
+  .chart { width: 100%; }
+  h2 { font-size: 20px; margin: 40px 0 4px; padding-left: 10px; border-left: 3px solid var(--accent); }
+  h2 + p { margin: 0 0 4px; color: var(--text-secondary); }
+  details { margin: 4px 0 10px; font-size: 13px; color: var(--text-secondary); }
+  summary { cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+  th { color: var(--text-secondary); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .quotes { display: grid; gap: 8px; margin: 8px 0 12px; }
+  .quote { border-left: 2px solid var(--accent); padding: 4px 12px; color: var(--text-primary); }
+  .quote small { display: block; color: var(--muted); }
+  .recs { counter-reset: rec; list-style: none; padding: 0; margin: 8px 0; }
+  .recs li { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 10px; }
+  .recs b { display: block; color: var(--accent); }
+  .recs span { color: var(--text-secondary); }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 860px) { .tiles { grid-template-columns: 1fr 1fr; } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+<header>
+  <h1>Melbourne <span>Guest Experience</span> Insights</h1>
+  <p>A Voice of Guest analysis of <span id="nReviews"></span> written guest reviews of Melbourne short stays,
+     built the way a hotel Guest Experience team would read its own feedback. Data: Inside Airbnb, Melbourne, scraped Sep 2026.</p>
+</header>
+
+<div class="filters">
+  <label for="segment">Segment</label>
+  <select id="segment"></select>
+  <label id="windowLabel"></label>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Where in the guest journey do complaints happen?</h3>
+    <p class="note">Reviews containing a complaint about each stage, per 1,000 reviews</p>
+    <div id="journey" class="chart"></div>
+    <details><summary>Show data</summary><div id="journeyTable"></div></details>
+  </div>
+  <div class="card">
+    <h3>Which complaints to fix first</h3>
+    <p class="note">How often a complaint appears vs how much it drags down the whole review (higher = more damaging)</p>
+    <div id="priority" class="chart"></div>
+  </div>
+</div>
+
+<h2>The Crown precinct vs the rest of Melbourne</h2>
+<p>Stays within 1.5 km of Crown Melbourne (Southbank, CBD, South Wharf) compared with the rest of the city. Use the Segment filter above to see hotel-style stays.</p>
+<div class="card">
+  <h3>Complaint rate by guest-journey stage, per 1,000 reviews</h3>
+  <p class="note">Near Crown guests complain more about arrival, sleep/noise, room comfort and parking</p>
+  <div id="segments" class="chart"></div>
+  <details><summary>Show data</summary><div id="segmentsTable"></div></details>
+</div>
+<div class="grid2" style="margin-top:12px">
+  <div class="card">
+    <h3>Share of reviews with a complaint, by month</h3>
+    <p class="note">The gap between the Crown precinct and the rest of Melbourne is persistent, not a one-off</p>
+    <div id="trend" class="chart"></div>
+  </div>
+  <div class="card">
+    <h3>Guest demand by month, Crown precinct</h3>
+    <p class="note">Average reviews per month, 2024-2025. Reviews are posted just after a stay, so they track visitor demand: it builds through the spring racing season (Oct-Dec)</p>
+    <div id="demand" class="chart"></div>
+  </div>
+</div>
+
+<h2>What drives the overall star rating?</h2>
+<p>Key-driver analysis: a regression of each listing's overall rating on its six category ratings (<span id="driverN"></span> listings with 10+ reviews).</p>
+<div class="grid2">
+  <div class="card">
+    <h3>Impact on the overall rating</h3>
+    <p class="note">Standardised regression coefficient: how much the overall rating moves when a category moves</p>
+    <div id="drivers" class="chart"></div>
+    <details><summary>Show data</summary><div id="driversTable"></div></details>
+  </div>
+  <div class="card">
+    <h3>Area scorecard</h3>
+    <p class="note">Local government areas with 1,000+ reviews in the last 24 months, sorted by complaint rate</p>
+    <div id="lgaTable" style="max-height:420px;overflow:auto"></div>
+  </div>
+</div>
+
+<h2>Guest voices from the Crown precinct</h2>
+<p>Verbatim sentences from reviews of stays near Crown, selected by the analyst from a random shortlist per theme. Quotes that name people were left out.</p>
+<div class="filters"><label for="vtheme">Theme</label><select id="vtheme"></select></div>
+<div class="quotes" id="quotes"></div>
+
+<h2>Recommendations for a Guest Experience team</h2>
+<ol class="recs" id="recs"></ol>
+
+<footer>
+  Method: reviews scored with VADER sentiment (tuned for hospitality phrasing), split into sentences and tagged to 12 guest-journey themes by keyword rules;
+  a sentence scoring at or below -0.05 counts as a complaint. A manual check of 60 random complaint sentences found 45 (75%) were genuine complaints; the rest were mostly neutral context or praise the model misread.
+  Listing ratings are Airbnb's lifetime averages. Built by Dhruv Rawat - Python, pandas, scikit-learn, Plotly.
+</footer>
+</div>
+</div>
+
+<script>
+const DATA = {"meta":{"window":"Oct 2024 - Sep 2026","reviews_all_time":947165,"reviews_window":377310,"sentences_tagged":704857,"listings":25715,"driver_r2":0.8906499093063596,"driver_n":13280},"kpis":{"All Melbourne":{"reviews":377310,"listings":25715,"avg_rating":4.780098063710182,"complaint_rate":0.05850361771487636,"negative_review_rate":0.01522620656754393},"Near Crown (1.5 km)":{"reviews":117653,"listings":5204,"avg_rating":4.761507772020725,"complaint_rate":0.07000246487552379,"negative_review_rate":0.017755603342031228},"Rest of Melbourne":{"reviews":259657,"listings":20511,"avg_rating":4.786004115226337,"complaint_rate":0.05329338319398283,"negative_review_rate":0.014080113380344069},"Hotel & serviced":{"reviews":11097,"listings":889,"avg_rating":4.577315175097276,"complaint_rate":0.08182391637379471,"negative_review_rate":0.036226007028926734},"Private home":{"reviews":366213,"listings":24826,"avg_rating":4.786824341765617,"complaint_rate":0.05779696515415892,"negative_review_rate":0.014589869829853119}},"themes":[{"segment":"All Melbourne","theme":"Booking & communication","mention_rate":0.2936,"complaints_per_1000":8.9316,"negative_share_of_mentions":0.0317,"avg_review_sentiment_when_complaint":0.2326},{"segment":"All Melbourne","theme":"Arrival & check-in","mention_rate":0.1701,"complaints_per_1000":14.1846,"negative_share_of_mentions":0.0817,"avg_review_sentiment_when_complaint":0.3714},{"segment":"All Melbourne","theme":"Cleanliness","mention_rate":0.2935,"complaints_per_1000":13.4266,"negative_share_of_mentions":0.0523,"avg_review_sentiment_when_complaint":0.1453},{"segment":"All Melbourne","theme":"Sleep quality & noise","mention_rate":0.162,"complaints_per_1000":15.7642,"negative_share_of_mentions":0.0928,"avg_review_sentiment_when_complaint":0.425},{"segment":"All Melbourne","theme":"Room comfort","mention_rate":0.3576,"complaints_per_1000":16.66,"negative_share_of_mentions":0.0432,"avg_review_sentiment_when_complaint":0.3442},{"segment":"All Melbourne","theme":"Facilities & amenities","mention_rate":0.1526,"complaints_per_1000":14.0707,"negative_share_of_mentions":0.0866,"avg_review_sentiment_when_complaint":0.3434},{"segment":"All Melbourne","theme":"Staff & hospitality","mention_rate":0.2312,"complaints_per_1000":2.7617,"negative_share_of_mentions":0.0115,"avg_review_sentiment_when_complaint":0.1189},{"segment":"All Melbourne","theme":"Food & dining","mention_rate":0.1458,"complaints_per_1000":3.9623,"negative_share_of_mentions":0.0262,"avg_review_sentiment_when_complaint":0.3795},{"segment":"All Melbourne","theme":"Location & transport","mention_rate":0.4863,"complaints_per_1000":7.2593,"negative_share_of_mentions":0.0134,"avg_review_sentiment_when_complaint":0.4778},{"segment":"All Melbourne","theme":"Parking","mention_rate":0.0467,"complaints_per_1000":4.5612,"negative_share_of_mentions":0.0975,"avg_review_sentiment_when_complaint":0.4931},{"segment":"All Melbourne","theme":"Value for money","mention_rate":0.0597,"complaints_per_1000":3.6363,"negative_share_of_mentions":0.0602,"avg_review_sentiment_when_complaint":0.0996},{"segment":"All Melbourne","theme":"Listing accuracy","mention_rate":0.0679,"complaints_per_1000":2.759,"negative_share_of_mentions":0.0412,"avg_review_sentiment_when_complaint":0.2481},{"segment":"Near Crown (1.5 km)","theme":"Booking & communication","mention_rate":0.3297,"complaints_per_1000":10.7435,"negative_share_of_mentions":0.0338,"avg_review_sentiment_when_complaint":0.2253},{"segment":"Near Crown (1.5 km)","theme":"Arrival & check-in","mention_rate":0.2042,"complaints_per_1000":19.9825,"negative_share_of_mentions":0.0938,"avg_review_sentiment_when_complaint":0.3885},{"segment":"Near Crown (1.5 km)","theme":"Cleanliness","mention_rate":0.3064,"complaints_per_1000":16.3447,"negative_share_of_mentions":0.0605,"avg_review_sentiment_when_complaint":0.157},{"segment":"Near Crown (1.5 km)","theme":"Sleep quality & noise","mention_rate":0.1291,"complaints_per_1000":18.9795,"negative_share_of_mentions":0.139,"avg_review_sentiment_when_complaint":0.4262},{"segment":"Near Crown (1.5 km)","theme":"Room comfort","mention_rate":0.3957,"complaints_per_1000":20.144,"negative_share_of_mentions":0.0472,"avg_review_sentiment_when_complaint":0.3481},{"segment":"Near Crown (1.5 km)","theme":"Facilities & amenities","mention_rate":0.1677,"complaints_per_1000":17.0076,"negative_share_of_mentions":0.0949,"avg_review_sentiment_when_complaint":0.3532},{"segment":"Near Crown (1.5 km)","theme":"Staff & hospitality","mention_rate":0.2063,"complaints_per_1000":2.9494,"negative_share_of_mentions":0.014,"avg_review_sentiment_when_complaint":0.0951},{"segment":"Near Crown (1.5 km)","theme":"Food & dining","mention_rate":0.1245,"complaints_per_1000":4.1988,"negative_share_of_mentions":0.0329,"avg_review_sentiment_when_complaint":0.3253},{"segment":"Near Crown (1.5 km)","theme":"Location & transport","mention_rate":0.591,"complaints_per_1000":9.919,"negative_share_of_mentions":0.0148,"avg_review_sentiment_when_complaint":0.4777},{"segment":"Near Crown (1.5 km)","theme":"Parking","mention_rate":0.0492,"complaints_per_1000":6.4257,"negative_share_of_mentions":0.1284,"avg_review_sentiment_when_complaint":0.5149},{"segment":"Near Crown (1.5 km)","theme":"Value for money","mention_rate":0.0702,"complaints_per_1000":4.3433,"negative_share_of_mentions":0.0606,"avg_review_sentiment_when_complaint":0.1798},{"segment":"Near Crown (1.5 km)","theme":"Listing accuracy","mention_rate":0.0734,"complaints_per_1000":3.0258,"negative_share_of_mentions":0.0415,"avg_review_sentiment_when_complaint":0.2188},{"segment":"Rest of Melbourne","theme":"Booking & communication","mention_rate":0.2773,"complaints_per_1000":8.1107,"negative_share_of_mentions":0.0306,"avg_review_sentiment_when_complaint":0.237},{"segment":"Rest of Melbourne","theme":"Arrival & check-in","mention_rate":0.1547,"complaints_per_1000":11.5576,"negative_share_of_mentions":0.0742,"avg_review_sentiment_when_complaint":0.3581},{"segment":"Rest of Melbourne","theme":"Cleanliness","mention_rate":0.2877,"complaints_per_1000":12.1044,"negative_share_of_mentions":0.0482,"avg_review_sentiment_when_complaint":0.1382},{"segment":"Rest of Melbourne","theme":"Sleep quality & noise","mention_rate":0.1769,"complaints_per_1000":14.3073,"negative_share_of_mentions":0.0772,"avg_review_sentiment_when_complaint":0.4244},{"segment":"Rest of Melbourne","theme":"Room comfort","mention_rate":0.3403,"complaints_per_1000":15.0814,"negative_share_of_mentions":0.041,"avg_review_sentiment_when_complaint":0.3418},{"segment":"Rest of Melbourne","theme":"Facilities & amenities","mention_rate":0.1458,"complaints_per_1000":12.7399,"negative_share_of_mentions":0.0821,"avg_review_sentiment_when_complaint":0.3375},{"segment":"Rest of Melbourne","theme":"Staff & hospitality","mention_rate":0.2425,"complaints_per_1000":2.6766,"negative_share_of_mentions":0.0106,"avg_review_sentiment_when_complaint":0.1307},{"segment":"Rest of Melbourne","theme":"Food & dining","mention_rate":0.1555,"complaints_per_1000":3.8551,"negative_share_of_mentions":0.0238,"avg_review_sentiment_when_complaint":0.4063},{"segment":"Rest of Melbourne","theme":"Location & transport","mention_rate":0.4389,"complaints_per_1000":6.0541,"negative_share_of_mentions":0.0126,"avg_review_sentiment_when_complaint":0.4779},{"segment":"Rest of Melbourne","theme":"Parking","mention_rate":0.0456,"complaints_per_1000":3.7164,"negative_share_of_mentions":0.0819,"avg_review_sentiment_when_complaint":0.476},{"segment":"Rest of Melbourne","theme":"Value for money","mention_rate":0.0549,"complaints_per_1000":3.3159,"negative_share_of_mentions":0.0601,"avg_review_sentiment_when_complaint":0.0519},{"segment":"Rest of Melbourne","theme":"Listing accuracy","mention_rate":0.0654,"complaints_per_1000":2.6381,"negative_share_of_mentions":0.0411,"avg_review_sentiment_when_complaint":0.2633},{"segment":"Hotel & serviced","theme":"Booking & communication","mention_rate":0.1901,"complaints_per_1000":12.2556,"negative_share_of_mentions":0.0692,"avg_review_sentiment_when_complaint":-0.0951},{"segment":"Hotel & serviced","theme":"Arrival & check-in","mention_rate":0.2137,"complaints_per_1000":19.1944,"negative_share_of_mentions":0.0855,"avg_review_sentiment_when_complaint":0.1199},{"segment":"Hotel & serviced","theme":"Cleanliness","mention_rate":0.3142,"complaints_per_1000":21.8978,"negative_share_of_mentions":0.0752,"avg_review_sentiment_when_complaint":-0.0284},{"segment":"Hotel & serviced","theme":"Sleep quality & noise","mention_rate":0.163,"complaints_per_1000":23.7902,"negative_share_of_mentions":0.1383,"avg_review_sentiment_when_complaint":0.3293},{"segment":"Hotel & serviced","theme":"Room comfort","mention_rate":0.2813,"complaints_per_1000":22.6187,"negative_share_of_mentions":0.0748,"avg_review_sentiment_when_complaint":0.1526},{"segment":"Hotel & serviced","theme":"Facilities & amenities","mention_rate":0.1154,"complaints_per_1000":15.6799,"negative_share_of_mentions":0.1277,"avg_review_sentiment_when_complaint":0.1699},{"segment":"Hotel & serviced","theme":"Staff & hospitality","mention_rate":0.2393,"complaints_per_1000":8.2905,"negative_share_of_mentions":0.0357,"avg_review_sentiment_when_complaint":-0.2339},{"segment":"Hotel & serviced","theme":"Food & dining","mention_rate":0.1214,"complaints_per_1000":4.5057,"negative_share_of_mentions":0.0362,"avg_review_sentiment_when_complaint":0.1786},{"segment":"Hotel & serviced","theme":"Location & transport","mention_rate":0.4483,"complaints_per_1000":8.2905,"negative_share_of_mentions":0.017,"avg_review_sentiment_when_complaint":0.2209},{"segment":"Hotel & serviced","theme":"Parking","mention_rate":0.0588,"complaints_per_1000":5.4069,"negative_share_of_mentions":0.0918,"avg_review_sentiment_when_complaint":0.148},{"segment":"Hotel & serviced","theme":"Value for money","mention_rate":0.1152,"complaints_per_1000":5.8574,"negative_share_of_mentions":0.0487,"avg_review_sentiment_when_complaint":-0.204},{"segment":"Hotel & serviced","theme":"Listing accuracy","mention_rate":0.0566,"complaints_per_1000":4.0552,"negative_share_of_mentions":0.0711,"avg_review_sentiment_when_complaint":0.0985},{"segment":"Private home","theme":"Booking & communication","mention_rate":0.2968,"complaints_per_1000":8.8309,"negative_share_of_mentions":0.031,"avg_review_sentiment_when_complaint":0.2464},{"segment":"Private home","theme":"Arrival & check-in","mention_rate":0.1688,"complaints_per_1000":14.0328,"negative_share_of_mentions":0.0816,"avg_review_sentiment_when_complaint":0.3819},{"segment":"Private home","theme":"Cleanliness","mention_rate":0.2929,"complaints_per_1000":13.1699,"negative_share_of_mentions":0.0515,"avg_review_sentiment_when_complaint":0.1541},{"segment":"Private home","theme":"Sleep quality & noise","mention_rate":0.1619,"complaints_per_1000":15.521,"negative_share_of_mentions":0.0914,"avg_review_sentiment_when_complaint":0.4295},{"segment":"Private home","theme":"Room comfort","mention_rate":0.3599,"complaints_per_1000":16.4795,"negative_share_of_mentions":0.0425,"avg_review_sentiment_when_complaint":0.3521},{"segment":"Private home","theme":"Facilities & amenities","mention_rate":0.1537,"complaints_per_1000":14.0219,"negative_share_of_mentions":0.0856,"avg_review_sentiment_when_complaint":0.3493},{"segment":"Private home","theme":"Staff & hospitality","mention_rate":0.2309,"complaints_per_1000":2.5941,"negative_share_of_mentions":0.0108,"avg_review_sentiment_when_complaint":0.153},{"segment":"Private home","theme":"Food & dining","mention_rate":0.1466,"complaints_per_1000":3.9458,"negative_share_of_mentions":0.026,"avg_review_sentiment_when_complaint":0.3865},{"segment":"Private home","theme":"Location & transport","mention_rate":0.4875,"complaints_per_1000":7.228,"negative_share_of_mentions":0.0133,"avg_review_sentiment_when_complaint":0.4867},{"segment":"Private home","theme":"Parking","mention_rate":0.0464,"complaints_per_1000":4.5356,"negative_share_of_mentions":0.0977,"avg_review_sentiment_when_complaint":0.5055},{"segment":"Private home","theme":"Value for money","mention_rate":0.058,"complaints_per_1000":3.569,"negative_share_of_mentions":0.0609,"avg_review_sentiment_when_complaint":0.1147},{"segment":"Private home","theme":"Listing accuracy","mention_rate":0.0683,"complaints_per_1000":2.7197,"negative_share_of_mentions":0.0405,"avg_review_sentiment_when_complaint":0.2549}],"drivers":[{"driver":"Accuracy","impact":0.3208,"correlation":0.8989,"avg_score":4.8236,"pct_below_4_5":0.0574},{"driver":"Cleanliness","impact":0.2621,"correlation":0.8403,"avg_score":4.7523,"pct_below_4_5":0.1233},{"driver":"Value","impact":0.2313,"correlation":0.8736,"avg_score":4.7412,"pct_below_4_5":0.0992},{"driver":"Communication","impact":0.1368,"correlation":0.7888,"avg_score":4.8791,"pct_below_4_5":0.0331},{"driver":"Check-in","impact":0.0668,"correlation":0.6661,"avg_score":4.8273,"pct_below_4_5":0.059},{"driver":"Location","impact":0.0503,"correlation":0.5463,"avg_score":4.8661,"pct_below_4_5":0.0211}],"trend":[{"segment":"Near Crown (1.5 km)","month":"2024-10-01T00:00:00.000","complaint_rate":0.0644,"reviews":4657},{"segment":"Near Crown (1.5 km)","month":"2024-11-01T00:00:00.000","complaint_rate":0.0729,"reviews":4884},{"segment":"Near Crown (1.5 km)","month":"2024-12-01T00:00:00.000","complaint_rate":0.0719,"reviews":4592},{"segment":"Near Crown (1.5 km)","month":"2025-01-01T00:00:00.000","complaint_rate":0.077,"reviews":4988},{"segment":"Near Crown (1.5 km)","month":"2025-02-01T00:00:00.000","complaint_rate":0.071,"reviews":3846},{"segment":"Near Crown (1.5 km)","month":"2025-03-01T00:00:00.000","complaint_rate":0.0761,"reviews":5006},{"segment":"Near Crown (1.5 km)","month":"2025-04-01T00:00:00.000","complaint_rate":0.0707,"reviews":4331},{"segment":"Near Crown (1.5 km)","month":"2025-05-01T00:00:00.000","complaint_rate":0.0632,"reviews":3828},{"segment":"Near Crown (1.5 km)","month":"2025-06-01T00:00:00.000","complaint_rate":0.0657,"reviews":4126},{"segment":"Near Crown (1.5 km)","month":"2025-07-01T00:00:00.000","complaint_rate":0.0757,"reviews":4849},{"segment":"Near Crown (1.5 km)","month":"2025-08-01T00:00:00.000","complaint_rate":0.0712,"reviews":4440},{"segment":"Near Crown (1.5 km)","month":"2025-09-01T00:00:00.000","complaint_rate":0.0597,"reviews":4220},{"segment":"Near Crown (1.5 km)","month":"2025-10-01T00:00:00.000","complaint_rate":0.0602,"reviews":5279},{"segment":"Near Crown (1.5 km)","month":"2025-11-01T00:00:00.000","complaint_rate":0.0634,"reviews":6090},{"segment":"Near Crown (1.5 km)","month":"2025-12-01T00:00:00.000","complaint_rate":0.0716,"reviews":5794},{"segment":"Near Crown (1.5 km)","month":"2026-01-01T00:00:00.000","complaint_rate":0.0901,"reviews":6314},{"segment":"Near Crown (1.5 km)","month":"2026-02-01T00:00:00.000","complaint_rate":0.0784,"reviews":4884},{"segment":"Near Crown (1.5 km)","month":"2026-03-01T00:00:00.000","complaint_rate":0.0684,"reviews":5833},{"segment":"Near Crown (1.5 km)","month":"2026-04-01T00:00:00.000","complaint_rate":0.0694,"reviews":5316},{"segment":"Near Crown (1.5 km)","month":"2026-05-01T00:00:00.000","complaint_rate":0.0686,"reviews":5134},{"segment":"Near Crown (1.5 km)","month":"2026-06-01T00:00:00.000","complaint_rate":0.0642,"reviews":5140},{"segment":"Near Crown (1.5 km)","month":"2026-07-01T00:00:00.000","complaint_rate":0.0705,"reviews":6083},{"segment":"Near Crown (1.5 km)","month":"2026-08-01T00:00:00.000","complaint_rate":0.066,"reviews":5986},{"segment":"Rest of Melbourne","month":"2024-10-01T00:00:00.000","complaint_rate":0.0495,"reviews":9990},{"segment":"Rest of Melbourne","month":"2024-11-01T00:00:00.000","complaint_rate":0.0485,"reviews":11105},{"segment":"Rest of Melbourne","month":"2024-12-01T00:00:00.000","complaint_rate":0.0534,"reviews":10124},{"segment":"Rest of Melbourne","month":"2025-01-01T00:00:00.000","complaint_rate":0.0576,"reviews":11837},{"segment":"Rest of Melbourne","month":"2025-02-01T00:00:00.000","complaint_rate":0.0535,"reviews":8954},{"segment":"Rest of Melbourne","month":"2025-03-01T00:00:00.000","complaint_rate":0.0541,"reviews":12368},{"segment":"Rest of Melbourne","month":"2025-04-01T00:00:00.000","complaint_rate":0.0523,"reviews":10020},{"segment":"Rest of Melbourne","month":"2025-05-01T00:00:00.000","complaint_rate":0.0485,"reviews":8025},{"segment":"Rest of Melbourne","month":"2025-06-01T00:00:00.000","complaint_rate":0.0488,"reviews":8873},{"segment":"Rest of Melbourne","month":"2025-07-01T00:00:00.000","complaint_rate":0.0551,"reviews":10194},{"segment":"Rest of Melbourne","month":"2025-08-01T00:00:00.000","complaint_rate":0.0494,"reviews":9289},{"segment":"Rest of Melbourne","month":"2025-09-01T00:00:00.000","complaint_rate":0.0504,"reviews":9336},{"segment":"Rest of Melbourne","month":"2025-10-01T00:00:00.000","complaint_rate":0.0529,"reviews":11540},{"segment":"Rest of Melbourne","month":"2025-11-01T00:00:00.000","complaint_rate":0.0512,"reviews":13174},{"segment":"Rest of Melbourne","month":"2025-12-01T00:00:00.000","complaint_rate":0.0598,"reviews":13520},{"segment":"Rest of Melbourne","month":"2026-01-01T00:00:00.000","complaint_rate":0.0602,"reviews":14349},{"segment":"Rest of Melbourne","month":"2026-02-01T00:00:00.000","complaint_rate":0.0598,"reviews":10946},{"segment":"Rest of Melbourne","month":"2026-03-01T00:00:00.000","complaint_rate":0.0559,"reviews":14573},{"segment":"Rest of Melbourne","month":"2026-04-01T00:00:00.000","complaint_rate":0.0508,"reviews":11763},{"segment":"Rest of Melbourne","month":"2026-05-01T00:00:00.000","complaint_rate":0.0481,"reviews":10581},{"segment":"Rest of Melbourne","month":"2026-06-01T00:00:00.000","complaint_rate":0.0511,"reviews":10687},{"segment":"Rest of Melbourne","month":"2026-07-01T00:00:00.000","complaint_rate":0.0566,"reviews":11971},{"segment":"Rest of Melbourne","month":"2026-08-01T00:00:00.000","complaint_rate":0.055,"reviews":11966}],"lgas":[{"lga":"Cardinia","listings":224,"reviews_24m":3696,"avg_rating":4.8377,"complaint_rate":0.0322,"top_complaint":"Facilities & amenities"},{"lga":"Nillumbik","listings":113,"reviews_24m":2995,"avg_rating":4.8494,"complaint_rate":0.0331,"top_complaint":"Room comfort"},{"lga":"Yarra Ranges","listings":1081,"reviews_24m":31685,"avg_rating":4.8709,"complaint_rate":0.0347,"top_complaint":"Room comfort"},{"lga":"Frankston","listings":266,"reviews_24m":3622,"avg_rating":4.8318,"complaint_rate":0.0384,"top_complaint":"Room comfort"},{"lga":"Hume","listings":390,"reviews_24m":4577,"avg_rating":4.7854,"complaint_rate":0.0409,"top_complaint":"Cleanliness"},{"lga":"Greater Dandenong","listings":195,"reviews_24m":1355,"avg_rating":4.7187,"complaint_rate":0.0421,"top_complaint":"Room comfort"},{"lga":"Whittlesea","listings":258,"reviews_24m":1842,"avg_rating":4.8008,"complaint_rate":0.0423,"top_complaint":"Room comfort"},{"lga":"Maroondah","listings":141,"reviews_24m":1760,"avg_rating":4.8035,"complaint_rate":0.0432,"top_complaint":"Room comfort"},{"lga":"Hobsons Bay","listings":328,"reviews_24m":4188,"avg_rating":4.8299,"complaint_rate":0.0437,"top_complaint":"Cleanliness"},{"lga":"Casey","listings":395,"reviews_24m":3504,"avg_rating":4.7646,"complaint_rate":0.0445,"top_complaint":"Room comfort"},{"lga":"Bayside","listings":427,"reviews_24m":3339,"avg_rating":4.8197,"complaint_rate":0.0452,"top_complaint":"Sleep quality & noise"},{"lga":"Darebin","listings":594,"reviews_24m":6114,"avg_rating":4.8124,"complaint_rate":0.046,"top_complaint":"Room comfort"},{"lga":"Knox","listings":197,"reviews_24m":2211,"avg_rating":4.7106,"complaint_rate":0.0461,"top_complaint":"Room comfort"},{"lga":"Glen Eira","listings":513,"reviews_24m":4699,"avg_rating":4.8059,"complaint_rate":0.0468,"top_complaint":"Sleep quality & noise"},{"lga":"Kingston","listings":373,"reviews_24m":3875,"avg_rating":4.7881,"complaint_rate":0.047,"top_complaint":"Room comfort"},{"lga":"Moonee Valley","listings":463,"reviews_24m":4433,"avg_rating":4.816,"complaint_rate":0.048,"top_complaint":"Cleanliness"},{"lga":"Brimbank","listings":384,"reviews_24m":3642,"avg_rating":4.7452,"complaint_rate":0.05,"top_complaint":"Cleanliness"},{"lga":"Yarra","listings":1785,"reviews_24m":30463,"avg_rating":4.8355,"complaint_rate":0.0517,"top_complaint":"Sleep quality & noise"},{"lga":"Melton","listings":321,"reviews_24m":2440,"avg_rating":4.7512,"complaint_rate":0.0537,"top_complaint":"Cleanliness"},{"lga":"Moreland","listings":959,"reviews_24m":11108,"avg_rating":4.776,"complaint_rate":0.0547,"top_complaint":"Sleep quality & noise"},{"lga":"Port Phillip","listings":2761,"reviews_24m":31295,"avg_rating":4.8083,"complaint_rate":0.0547,"top_complaint":"Sleep quality & noise"},{"lga":"Stonnington","listings":1308,"reviews_24m":15551,"avg_rating":4.8145,"complaint_rate":0.055,"top_complaint":"Sleep quality & noise"},{"lga":"Maribyrnong","listings":651,"reviews_24m":8714,"avg_rating":4.7827,"complaint_rate":0.0551,"top_complaint":"Room comfort"},{"lga":"Manningham","listings":236,"reviews_24m":2212,"avg_rating":4.7588,"complaint_rate":0.0556,"top_complaint":"Facilities & amenities"},{"lga":"Banyule","listings":226,"reviews_24m":2269,"avg_rating":4.7568,"complaint_rate":0.0569,"top_complaint":"Room comfort"},{"lga":"Boroondara","listings":603,"reviews_24m":5350,"avg_rating":4.7711,"complaint_rate":0.057,"top_complaint":"Sleep quality & noise"},{"lga":"Wyndham","listings":823,"reviews_24m":5275,"avg_rating":4.7434,"complaint_rate":0.0612,"top_complaint":"Cleanliness"},{"lga":"Monash","listings":627,"reviews_24m":4912,"avg_rating":4.7365,"complaint_rate":0.0645,"top_complaint":"Room comfort"},{"lga":"Whitehorse","listings":651,"reviews_24m":4789,"avg_rating":4.7177,"complaint_rate":0.067,"top_complaint":"Room comfort"},{"lga":"Melbourne","listings":8422,"reviews_24m":165395,"avg_rating":4.7454,"complaint_rate":0.0706,"top_complaint":"Room comfort"}],"verbatims":[{"theme":"Booking & communication","type":"Complaint","quote":"I tried messaging the host, but there was no phone number to call and I didn\u2019t receive a response."},{"theme":"Booking & communication","type":"Complaint","quote":"Communication was prompt but quite impersonal."},{"theme":"Booking & communication","type":"Complaint","quote":"I also could not access the spa, which was advertised in the booking and one of the main reasons for booking, which was disappointing."},{"theme":"Booking & communication","type":"Praise","quote":"Great communication from hotel staff upon check in."},{"theme":"Arrival & check-in","type":"Complaint","quote":"Finding the car park and key collection was very stressful and took us over an hour."},{"theme":"Arrival & check-in","type":"Complaint","quote":"Also it was difficult to find the lockbox shop at check-in and when requested for 2 hrs delay in checkout the host asked for extra charges."},{"theme":"Arrival & check-in","type":"Complaint","quote":"There were no instructions regarding access to the pool and the host didn\u2019t even know what to to do it was very frustrating and disappointing."},{"theme":"Arrival & check-in","type":"Complaint","quote":"Check in was delayed and a cupboard missing in the kitchen."},{"theme":"Arrival & check-in","type":"Praise","quote":"Great location and check-in was really easy - he was also very flexible."},{"theme":"Cleanliness","type":"Complaint","quote":"Dirty floors, mould in the shower grouting and accumulated dust under beds and on surfaces."},{"theme":"Cleanliness","type":"Complaint","quote":"There was rubbish left behind in bins from previous guest, dirty towels in cupboard, and stains on the duvet, and no remote for the television."},{"theme":"Cleanliness","type":"Complaint","quote":"However, there was a bit of an unpleasant smell when we first arrived, possibly leftover from the cleaning."},{"theme":"Cleanliness","type":"Praise","quote":"Very clean apartment, answered all my questions fast and was exactly like pictures."},{"theme":"Sleep quality & noise","type":"Complaint","quote":"The rubbish chute was used ALLL night and the noise was so very bad."},{"theme":"Sleep quality & noise","type":"Complaint","quote":"Unfortunately we were staying here at a time of construction, so very noisy at 7:30 am."},{"theme":"Sleep quality & noise","type":"Complaint","quote":"The mattress and pillows in the second bedroom are poor quality added to the poor sound insulation and inefficient air conditioning meant my daughter didn\u2019t sleep well."},{"theme":"Sleep quality & noise","type":"Praise","quote":"Great stay with a great view, comfortable and surprisingly quiet."},{"theme":"Room comfort","type":"Complaint","quote":"On top of that, there was no airflow in the apartment as we couldn\u2019t open the windows and the air conditioning was broken, making the heat even worse."},{"theme":"Room comfort","type":"Complaint","quote":"The mattress sagged badly in the middle, making it uncomfortable, especially for those with back issues."},{"theme":"Room comfort","type":"Complaint","quote":"The only issues we had were both showers leaking badly and unfortunately the pool wasn\u2019t heated so we could only use the spa."},{"theme":"Room comfort","type":"Praise","quote":"It was spacious enough for our whole family, and we loved how comfortable and cozy everything felt."},{"theme":"Facilities & amenities","type":"Complaint","quote":"It was also disappointing to find out that Airbnb guests weren\u2019t able to use the amenities on weekends."},{"theme":"Facilities & amenities","type":"Complaint","quote":"Decent location and fairly clean, but a very basic experience that was made worse because there was no working internet for our 4 days that we stayed there."},{"theme":"Facilities & amenities","type":"Complaint","quote":"The listing mentioned a fully equipped kitchen, but the pots and pans provided were quite worn out and not really suitable for use."},{"theme":"Facilities & amenities","type":"Praise","quote":"The space was very clean and well-maintained, with great amenities that made everything comfortable and easy."},{"theme":"Staff & hospitality","type":"Complaint","quote":"But the customer service and the receptionist are not friendly and polite."},{"theme":"Staff & hospitality","type":"Complaint","quote":"our only problem was that our tv didn\u2019t work and when we called staff up to help look at it she seemed really annoyed by this request."},{"theme":"Staff & hospitality","type":"Complaint","quote":"It took 3wks many messages and many hours sitting around waiting for technicians and staff to finally fix problems."},{"theme":"Staff & hospitality","type":"Praise","quote":"The host was helpful and proactive in communication."},{"theme":"Food & dining","type":"Complaint","quote":"There was a coffee machine but no coffee pods."},{"theme":"Food & dining","type":"Complaint","quote":"No tea or coffee, no extra details, just the bare minimum."},{"theme":"Food & dining","type":"Praise","quote":"The apartment was very clean and tidy, and we appreciated the generous supplies of tea, coffee, etc."},{"theme":"Location & transport","type":"Complaint","quote":"Only downside was the trains at night were nonstop and there was no aircon for inside the bedroom, with the blinds shut it got quite stuffy."},{"theme":"Location & transport","type":"Complaint","quote":"The location is very convenient, the room is very comfortable, but the elevator is old and slow, and the parking lot downstairs smells bad"},{"theme":"Location & transport","type":"Praise","quote":"It was also super close to public transport which made getting around a treat!"},{"theme":"Parking","type":"Complaint","quote":"There are car parks around but no recommendations were provided."},{"theme":"Parking","type":"Complaint","quote":"No parking spot was definitely a negative & added an extra expense to our trip."},{"theme":"Parking","type":"Complaint","quote":"Only problem they charged seperate for the car park."},{"theme":"Parking","type":"Praise","quote":"Great stay with everything we needed - secure parking, walkable location, washer/dryer was handy."},{"theme":"Value for money","type":"Complaint","quote":"Furniture however was cheap, sparse, mismatched and just thrown together which is a shame."},{"theme":"Value for money","type":"Complaint","quote":"No Airbnb touches, stains on the carpet, marks on walls, worn furniture, cheap products."},{"theme":"Value for money","type":"Praise","quote":"Amazing view of the city, definitely worth the price!!!"},{"theme":"Listing accuracy","type":"Complaint","quote":"The couch is extremely worn out and not as the photos show and dining table is definitely old with heat damage and chipped wood."},{"theme":"Listing accuracy","type":"Complaint","quote":"The apartment did not look like the pictures, no plants or any type of decor- very bland."},{"theme":"Listing accuracy","type":"Complaint","quote":"Presentation is not like the photos with scruffy bedding and a mixture of uncomfortable pillows."},{"theme":"Listing accuracy","type":"Praise","quote":"Great location, the place was clean and exactly as described."}],"volume":[{"quarter":"2016Q1","reviews":4164},{"quarter":"2016Q2","reviews":3655},{"quarter":"2016Q3","reviews":4708},{"quarter":"2016Q4","reviews":6474},{"quarter":"2017Q1","reviews":7533},{"quarter":"2017Q2","reviews":7051},{"quarter":"2017Q3","reviews":7479},{"quarter":"2017Q4","reviews":9466},{"quarter":"2018Q1","reviews":11306},{"quarter":"2018Q2","reviews":10014},{"quarter":"2018Q3","reviews":11593},{"quarter":"2018Q4","reviews":14504},{"quarter":"2019Q1","reviews":16012},{"quarter":"2019Q2","reviews":13530},{"quarter":"2019Q3","reviews":14386},{"quarter":"2019Q4","reviews":18293},{"quarter":"2020Q1","reviews":16928},{"quarter":"2020Q2","reviews":3631},{"quarter":"2020Q3","reviews":1725},{"quarter":"2020Q4","reviews":5389},{"quarter":"2021Q1","reviews":11002},{"quarter":"2021Q2","reviews":11938},{"quarter":"2021Q3","reviews":4871},{"quarter":"2021Q4","reviews":11808},{"quarter":"2022Q1","reviews":19683},{"quarter":"2022Q2","reviews":23730},{"quarter":"2022Q3","reviews":24405},{"quarter":"2022Q4","reviews":27968},{"quarter":"2023Q1","reviews":30409},{"quarter":"2023Q2","reviews":29093},{"quarter":"2023Q3","reviews":29082},{"quarter":"2023Q4","reviews":35021},{"quarter":"2024Q1","reviews":41261},{"quarter":"2024Q2","reviews":34437},{"quarter":"2024Q3","reviews":35271},{"quarter":"2024Q4","reviews":45352},{"quarter":"2025Q1","reviews":46999},{"quarter":"2025Q2","reviews":39203},{"quarter":"2025Q3","reviews":42328},{"quarter":"2025Q4","reviews":55397},{"quarter":"2026Q1","reviews":56899},{"quarter":"2026Q2","reviews":48621}],"event_months":[{"month":"Jan","avg_reviews":4353.0},{"month":"Feb","avg_reviews":3735.0},{"month":"Mar","avg_reviews":4484.0},{"month":"Apr","avg_reviews":3958.0},{"month":"May","avg_reviews":3570.0},{"month":"Jun","avg_reviews":3846.0},{"month":"Jul","avg_reviews":4346.0},{"month":"Aug","avg_reviews":3938.0},{"month":"Sep","avg_reviews":4000.0},{"month":"Oct","avg_reviews":4968.0},{"month":"Nov","avg_reviews":5487.0},{"month":"Dec","avg_reviews":5193.0}],"january":[{"theme":"Value for money","january_per_1000":6.459,"other_months_per_1000":4.1184,"uplift":0.5683},{"theme":"Facilities & amenities","january_per_1000":24.155,"other_months_per_1000":16.2481,"uplift":0.4866},{"theme":"Room comfort","january_per_1000":27.7827,"other_months_per_1000":19.3322,"uplift":0.4371},{"theme":"Cleanliness","january_per_1000":21.1467,"other_months_per_1000":15.8344,"uplift":0.3355},{"theme":"Food & dining","january_per_1000":5.3088,"other_months_per_1000":4.0808,"uplift":0.3009},{"theme":"Parking","january_per_1000":7.8747,"other_months_per_1000":6.2717,"uplift":0.2556},{"theme":"Listing accuracy","january_per_1000":3.5392,"other_months_per_1000":2.9713,"uplift":0.1911},{"theme":"Arrival & check-in","january_per_1000":23.2702,"other_months_per_1000":19.6331,"uplift":0.1853},{"theme":"Location & transport","january_per_1000":11.5024,"other_months_per_1000":9.7507,"uplift":0.1796},{"theme":"Booking & communication","january_per_1000":11.9448,"other_months_per_1000":10.6158,"uplift":0.1252},{"theme":"Sleep quality & noise","january_per_1000":20.7043,"other_months_per_1000":18.7963,"uplift":0.1015},{"theme":"Staff & hospitality","january_per_1000":3.0968,"other_months_per_1000":2.9337,"uplift":0.0556}],"superhost":[{"superhost":false,"score_rating":4.7117,"score_communication":4.8238,"score_cleanliness":4.6645},{"superhost":true,"score_rating":4.88,"score_communication":4.9388,"score_cleanliness":4.847}]};
+const css = n => getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(n).trim();
+const pct = (v, d = 1) => (v * 100).toFixed(d) + '%';
+const JOURNEY = ["Booking & communication", "Arrival & check-in", "Cleanliness", "Sleep quality & noise",
+  "Room comfort", "Facilities & amenities", "Staff & hospitality", "Food & dining",
+  "Location & transport", "Parking", "Value for money", "Listing accuracy"];
+const SEG_COLOR = {"Near Crown (1.5 km)": "--series-2", "Rest of Melbourne": "--series-1"};
+const segSel = document.getElementById('segment');
+
+function baseLayout(extra = {}) {
+  return Object.assign({
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 12, color: css('--text-secondary')},
+    margin: {l: 10, r: 16, t: 8, b: 36},
+    hoverlabel: {bgcolor: css('--surface-1'), bordercolor: css('--border'), font: {color: css('--text-primary')}},
+    showlegend: false,
+  }, extra);
+}
+const axis = (extra = {}) => Object.assign({gridcolor: css('--grid'), linecolor: css('--axis'),
+  zerolinecolor: css('--axis'), tickfont: {color: css('--muted')}, automargin: true}, extra);
+const CONFIG = {displayModeBar: false, responsive: true};
+
+function table(el, rows, cols) {
+  const t = document.createElement('table');
+  const head = t.createTHead().insertRow();
+  cols.forEach(c => { const th = document.createElement('th'); th.textContent = c.label; if (c.num) th.className = 'num'; head.appendChild(th); });
+  const body = t.createTBody();
+  rows.forEach(r => { const tr = body.insertRow(); cols.forEach(c => {
+    const td = tr.insertCell(); td.textContent = c.fmt ? c.fmt(r[c.key]) : r[c.key]; if (c.num) td.className = 'num'; }); });
+  const host = document.getElementById(el); host.replaceChildren(t);
+}
+
+function themesFor(seg) {
+  const rows = DATA.themes.filter(t => t.segment === seg);
+  return JOURNEY.map(j => rows.find(r => r.theme === j));
+}
+
+function tiles(seg) {
+  const k = DATA.kpis[seg], th = themesFor(seg);
+  const top = th.reduce((a, b) => b.complaints_per_1000 > a.complaints_per_1000 ? b : a);
+  const base = DATA.kpis['All Melbourne'];
+  const diff = (k.complaint_rate / base.complaint_rate - 1);
+  const items = [
+    ['Reviews analysed', k.reviews.toLocaleString(), `${k.listings.toLocaleString()} listings`],
+    ['Average guest rating', k.avg_rating.toFixed(2) + ' / 5', 'listings with 5+ reviews'],
+    ['Reviews with a complaint', pct(k.complaint_rate),
+      seg === 'All Melbourne' ? 'even though most reviews are positive overall'
+        : `${diff >= 0 ? '+' : ''}${(diff * 100).toFixed(0)}% vs all Melbourne`],
+    ['Most common complaint', top.theme, `${top.complaints_per_1000.toFixed(1)} per 1,000 reviews`],
+  ];
+  const host = document.getElementById('tiles'); host.replaceChildren();
+  items.forEach(([l, v, s]) => {
+    const d = document.createElement('div'); d.className = 'tile';
+    [['label', l], ['value', v], ['sub', s]].forEach(([c, txt]) => {
+      const e = document.createElement('div'); e.className = c; e.textContent = txt; d.appendChild(e); });
+    if (items[3][0] === l) d.querySelector('.value').style.fontSize = '20px';
+    host.appendChild(d);
+  });
+}
+
+function journey(seg) {
+  const th = themesFor(seg).slice().reverse();
+  Plotly.react('journey', [{
+    type: 'bar', orientation: 'h', y: th.map(t => t.theme), x: th.map(t => t.complaints_per_1000),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.62,
+    text: th.map(t => t.complaints_per_1000.toFixed(1)), textposition: 'outside', cliponaxis: false,
+    textfont: {color: css('--text-secondary')},
+    customdata: th.map(t => [pct(t.mention_rate), pct(t.negative_share_of_mentions)]),
+    hovertemplate: '<b>%{x:.1f} per 1,000 reviews</b><br>%{y}<br>Mentioned in %{customdata[0]} of reviews<br>%{customdata[1]} of mentions are negative<extra></extra>',
+  }], baseLayout({height: 420, xaxis: axis({title: {text: 'complaints per 1,000 reviews', font: {size: 11}}}),
+    yaxis: axis({gridcolor: 'rgba(0,0,0,0)'}), bargap: 0.3}), CONFIG);
+  table('journeyTable', themesFor(seg), [
+    {key: 'theme', label: 'Theme'},
+    {key: 'mention_rate', label: 'Mentioned in', num: 1, fmt: v => pct(v)},
+    {key: 'complaints_per_1000', label: 'Complaints / 1,000', num: 1, fmt: v => v.toFixed(1)},
+    {key: 'negative_share_of_mentions', label: 'Negative share', num: 1, fmt: v => pct(v)},
+    {key: 'avg_review_sentiment_when_complaint', label: 'Review sentiment when complained', num: 1, fmt: v => v.toFixed(2)}]);
+}
+
+// Labels sit beside their dot; when two dots are close, one label goes above and one below.
+function labelPositions(xs, ys, xm) {
+  const xr = Math.max(...xs) - Math.min(...xs), yr = Math.max(...ys) - Math.min(...ys);
+  const pos = xs.map(x => x > xm ? 'middle left' : 'middle right');
+  for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
+    if (Math.abs(xs[i] - xs[j]) / xr < 0.25 && Math.abs(ys[i] - ys[j]) / yr < 0.06) {
+      const [hi, lo] = ys[i] >= ys[j] ? [i, j] : [j, i];
+      const side = xs[hi] > xm ? 'left' : 'right';
+      pos[hi] = 'top ' + side; pos[lo] = 'bottom ' + side;
+    }
+  }
+  return pos;
+}
+
+function priority(seg) {
+  const th = themesFor(seg);
+  const damage = t => 1 - t.avg_review_sentiment_when_complaint;
+  const xs = th.map(t => t.complaints_per_1000), ys = th.map(damage);
+  const xm = xs.reduce((a, b) => a + b) / xs.length, ym = ys.reduce((a, b) => a + b) / ys.length;
+  Plotly.react('priority', [{
+    type: 'scatter', mode: 'markers+text', x: xs, y: ys, text: th.map(t => t.theme),
+    textposition: labelPositions(xs, ys, xm),
+    textfont: {size: 11, color: css('--text-secondary')},
+    marker: {size: 12, color: xs.map((x, i) => x > xm && ys[i] > ym ? css('--series-2') : css('--series-1')),
+      line: {color: css('--surface-1'), width: 2}},
+    hovertemplate: '<b>%{text}</b><br>%{x:.1f} complaints per 1,000 reviews<br>Damage score %{y:.2f}<extra></extra>',
+  }], baseLayout({height: 420,
+    xaxis: axis({title: {text: 'how often (complaints per 1,000 reviews)', font: {size: 11}}, zeroline: false,
+      range: [Math.min(...xs) - 1.5, Math.max(...xs) + 1.5]}),
+    yaxis: axis({title: {text: 'how damaging (1 - review sentiment)', font: {size: 11}}, zeroline: false}),
+    shapes: [{type: 'line', x0: xm, x1: xm, yref: 'paper', y0: 0, y1: 1, line: {color: css('--axis'), width: 1}},
+             {type: 'line', y0: ym, y1: ym, xref: 'paper', x0: 0, x1: 1, line: {color: css('--axis'), width: 1}}],
+    annotations: [{xref: 'paper', yref: 'paper', x: 1, y: 1, xanchor: 'right', yanchor: 'top', showarrow: false,
+      text: 'Fix first: frequent and damaging (gold)', font: {size: 11, color: css('--accent')}}],
+  }), CONFIG);
+}
+
+function segments() {
+  const segs = ['Near Crown (1.5 km)', 'Rest of Melbourne'];
+  const traces = segs.map(s => {
+    const th = themesFor(s).slice().reverse();
+    return {type: 'bar', orientation: 'h', name: s, y: th.map(t => t.theme), x: th.map(t => t.complaints_per_1000),
+      marker: {color: css(SEG_COLOR[s]), cornerradius: 3, line: {color: css('--surface-1'), width: 1}},
+      hovertemplate: `<b>%{x:.1f} per 1,000</b><br>${s}<br>%{y}<extra></extra>`};
+  }).reverse();
+  Plotly.react('segments', traces, baseLayout({height: 520, barmode: 'group', bargap: 0.25, bargroupgap: 0.08,
+    showlegend: true, legend: {orientation: 'h', y: 1.06, x: 0, traceorder: 'reversed', font: {color: css('--text-secondary')}},
+    margin: {l: 10, r: 16, t: 30, b: 36},
+    xaxis: axis({title: {text: 'complaints per 1,000 reviews', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
+  const rows = JOURNEY.map(j => Object.fromEntries([['theme', j], ...segs.map(s =>
+    [s, DATA.themes.find(t => t.segment === s && t.theme === j).complaints_per_1000])]));
+  table('segmentsTable', rows, [{key: 'theme', label: 'Theme'},
+    ...segs.map(s => ({key: s, label: s, num: 1, fmt: v => v.toFixed(1)}))]);
+}
+
+function trend() {
+  const segs = ['Near Crown (1.5 km)', 'Rest of Melbourne'];
+  const traces = segs.map(s => {
+    const r = DATA.trend.filter(t => t.segment === s);
+    return {type: 'scatter', mode: 'lines', name: s, x: r.map(t => t.month), y: r.map(t => t.complaint_rate),
+      line: {color: css(SEG_COLOR[s]), width: 2}, hovertemplate: `${s}: <b>%{y:.1%}</b><extra></extra>`};
+  });
+  const ends = segs.map(s => DATA.trend.filter(t => t.segment === s).slice(-1)[0]);
+  Plotly.react('trend', traces, baseLayout({height: 320, hovermode: 'x unified', showlegend: true,
+    legend: {orientation: 'h', y: 1.12, x: 0, font: {color: css('--text-secondary')}},
+    margin: {l: 10, r: 16, t: 30, b: 36},
+    xaxis: axis({showgrid: false, showspikes: true, spikemode: 'across', spikethickness: 1, spikecolor: css('--axis'), spikedash: 'solid'}),
+    yaxis: axis({tickformat: '.0%', rangemode: 'tozero'}),
+    annotations: ends.map((e, i) => ({x: e.month, y: e.complaint_rate, text: pct(e.complaint_rate), showarrow: false,
+      xanchor: 'left', xshift: 4, font: {size: 11, color: css('--text-secondary')}}))}), CONFIG);
+}
+
+function demand() {
+  const m = DATA.event_months;
+  Plotly.react('demand', [{type: 'bar', x: m.map(r => r.month), y: m.map(r => r.avg_reviews),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.66,
+    hovertemplate: '<b>%{y:,.0f} reviews</b><br>%{x}<extra></extra>'}],
+    baseLayout({height: 320, xaxis: axis({showgrid: false}), yaxis: axis({rangemode: 'tozero'}),
+      annotations: [{x: 'Nov', y: Math.max(...m.map(r => r.avg_reviews)), text: 'Spring racing', showarrow: false, yshift: 12,
+        font: {size: 11, color: css('--text-secondary')}}]}), CONFIG);
+}
+
+function drivers() {
+  const d = DATA.drivers.slice().reverse();
+  Plotly.react('drivers', [{type: 'bar', orientation: 'h', y: d.map(r => r.driver), x: d.map(r => r.impact),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.6,
+    text: d.map(r => r.impact.toFixed(2)), textposition: 'outside', cliponaxis: false, textfont: {color: css('--text-secondary')},
+    customdata: d.map(r => [r.avg_score.toFixed(2), pct(r.pct_below_4_5)]),
+    hovertemplate: '<b>Impact %{x:.2f}</b><br>%{y}<br>Average score %{customdata[0]}<br>%{customdata[1]} of listings below 4.5<extra></extra>'}],
+    baseLayout({height: 320, xaxis: axis({title: {text: 'standardised impact', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
+  table('driversTable', DATA.drivers, [{key: 'driver', label: 'Category'},
+    {key: 'impact', label: 'Impact', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'correlation', label: 'Correlation', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'avg_score', label: 'Avg score', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'pct_below_4_5', label: 'Listings below 4.5', num: 1, fmt: v => pct(v)}]);
+}
+
+function quotes() {
+  const sel = document.getElementById('vtheme');
+  const host = document.getElementById('quotes'); host.replaceChildren();
+  DATA.verbatims.filter(v => v.theme === sel.value).forEach(v => {
+    const d = document.createElement('div'); d.className = 'quote';
+    const q = document.createElement('div'); q.textContent = '"' + v.quote + '"';
+    const s = document.createElement('small'); s.textContent = v.type;
+    d.append(q, s); host.appendChild(d);
+  });
+}
+
+const RECS = [
+  ['Make arrival effortless in the precinct.', 'Arrival and check-in complaints are 73% higher near Crown than in the rest of Melbourne (keys, building access, lifts, finding the entrance). Map the arrival journey end to end, add clear wayfinding and pre-arrival messages, and track "arrival" complaints weekly.'],
+  ['Treat cleanliness as the first priority.', 'Cleanliness is the second-biggest driver of the overall rating, and when a guest complains about it the whole review turns sour. One in eight listings (12.3%) score below 4.5, more than for any other category. Set a room-readiness audit and close the loop on every cleanliness complaint within 24 hours.'],
+  ['Protect sleep in a busy entertainment precinct.', 'Noise and sleep complaints near Crown run at 19 per 1,000 reviews vs 14 elsewhere, and 14% of all sleep and noise mentions near Crown are negative. Room allocation (quiet floors for families and early flights), better bedding, and noise notes at booking all help.'],
+  ['Make hotel-style service consistent.', 'Hotel and serviced stays have the highest complaint rate (8.2%) and a lower average rating (4.58 vs 4.79). Staff complaints are 3x more common than in private homes and are the most damaging kind: the review turns negative overall. Service recovery training should be a VoG program priority.'],
+  ['Set accurate expectations to protect the rating.', 'Listing accuracy is the strongest driver of the overall rating, ahead of cleanliness and value. Photos, room descriptions and fees must match reality. Surprises turn into complaints about value.'],
+  ['Prepare for January.', 'January was the worst month for complaints near Crown in both years (7.7% of reviews in Jan 2025, 9.0% in Jan 2026): summer heat plus Australian Open crowds. That month, value complaints rise 57%, facilities 49%, room comfort (heat, air conditioning) 44% and cleanliness 34%. Check air conditioning before summer, staff up housekeeping for fast turnarounds, and explain event-period pricing clearly.'],
+  ['Run Voice of Guest as a closed loop.', 'Use a monthly GX scorecard: complaint rate per 1,000 reviews by journey stage, the top 3 themes and how damaging each one is, with an alert when a theme rises above its 3-month average. Every complaint gets a response and an owner, and the fixes are tracked through to the next scorecard.'],
+];
+
+function recs() {
+  const host = document.getElementById('recs');
+  RECS.forEach(([b, s]) => { const li = document.createElement('li');
+    const bb = document.createElement('b'); bb.textContent = b; const ss = document.createElement('span'); ss.textContent = s;
+    li.append(bb, ss); host.appendChild(li); });
+}
+
+function renderFiltered() { const s = segSel.value; tiles(s); journey(s); priority(s); }
+function renderAll() { renderFiltered(); segments(); trend(); demand(); drivers(); }
+
+Object.keys(DATA.kpis).forEach(s => segSel.add(new Option(s, s)));
+JOURNEY.forEach(j => document.getElementById('vtheme').add(new Option(j, j)));
+document.getElementById('vtheme').value = 'Arrival & check-in';
+document.getElementById('nReviews').textContent = DATA.meta.reviews_window.toLocaleString();
+document.getElementById('windowLabel').textContent = 'Reviews from ' + DATA.meta.window;
+document.getElementById('driverN').textContent = DATA.meta.driver_n.toLocaleString();
+table('lgaTable', DATA.lgas, [{key: 'lga', label: 'Area'},
+  {key: 'reviews_24m', label: 'Reviews', num: 1, fmt: v => v.toLocaleString()},
+  {key: 'avg_rating', label: 'Avg rating', num: 1, fmt: v => v.toFixed(2)},
+  {key: 'complaint_rate', label: 'With complaint', num: 1, fmt: v => pct(v)},
+  {key: 'top_complaint', label: 'Top complaint'}]);
+segSel.addEventListener('change', renderFiltered);
+document.getElementById('vtheme').addEventListener('change', quotes);
+recs(); quotes(); renderAll();
+</script>
+</body>
+</html>

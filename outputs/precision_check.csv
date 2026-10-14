@@ -1,0 +1,61 @@
+id,themes,sentiment,sentence,genuine_complaint
+0,Cleanliness,-0.4404,It feels dirty sitting on it.,yes
+1,Booking & communication|Staff & hospitality,-0.6522,The hosts were awful - no helpful response.,yes
+2,Booking & communication|Arrival & check-in,-0.4404,"The hosts communicated with us throughout our checking making it a smooth process, even for tired travellers.",no
+3,Cleanliness,-0.5719,"it is ok, but the host hired a bad cleaner.",yes
+4,Booking & communication|Arrival & check-in,-0.4215,"On the day of check-in, I called on the same day, but still received no reply.",yes
+5,Booking & communication,-0.3182,I had a flight delay and needed to change the days of my booking.,no
+6,Room comfort,-0.34,from the private balcony and spa you can see the spectacular views of crown fire display and Melbourne's city lights and night life.,no
+7,Cleanliness|Room comfort,-0.079,Room was spotless with a view to die for & the guests next door were very pleasant.,no
+8,Arrival & check-in|Facilities & amenities,-0.3107,"The listing promotes pool access, however we later discovered the building does not allow short-term guests to use the pool facilities, which created unnecessary stress and confusion during the stay.",yes
+9,Sleep quality & noise,-0.1779,sometimes noisy and even in the night.,yes
+10,Sleep quality & noise,-0.296,"However, all guests had no sleep due to itchiness due to the bed / blanket.",yes
+11,Sleep quality & noise,-0.25,"For anything longer, the bed alone would be a dealbreaker.",yes
+12,Room comfort,-0.4588,We didn’t report the keypad problem after being given such a hard time over the air conditioner.,yes
+13,Cleanliness|Room comfort,-0.5927,"But in this south yarra accomodation there was a guy who stayed another room, and he was dirty he didn’t check the toilet and bathroom ateş after use despite the warrant from Neel.",yes
+14,Booking & communication,-0.6956,"My baby was struggling , and I considered leaving, but since my cancellation was denied and I had paid a lot, I stayed.",yes
+15,Cleanliness,-0.6378,Unfortunately the downstairs neighbour smoked and the smell was noticeable in the apartment which was a little unpleasant.,yes
+16,Arrival & check-in,-0.296,No need to carry keys or cards with you when you’re out exploring the city.,no
+17,Facilities & amenities,-0.3089,"The only minor hitch was not having a smart tv, being unable to screen mirror from my device or download apps to the tv.",yes
+18,Staff & hospitality|Location & transport,-0.1531,"There is service late into the night, especially at weekends, and even if you miss the last tram an Uber ride will only set you back $15 or so.",no
+19,Cleanliness|Facilities & amenities,-0.2263,(I cleaned them myself.) The remote stopped working - the TV was unusable.,yes
+20,Cleanliness|Room comfort,-0.5719,"One noticable negative thing was that we found multiple red (assumed blood) stains in the bedroom carpet, and on the walls of the bathrooms.",yes
+21,Cleanliness,-0.4404,we did find dirty dishes and leftovers from previous guests.,yes
+22,Arrival & check-in|Cleanliness|Staff & hospitality,-0.3875,"Not pet friendly, even if stated, if one hair is found upstairs or on furnitures, they will charge 350 extra, they only tell you this one day before check-in.",yes
+23,Location & transport,-0.2263,The unit had everything we required and the tram stopped right outside.,no
+24,Sleep quality & noise,-0.128,Just mindful that the place is beside a freeway which can get real noisy day or night.,yes
+25,Food & dining,-0.4003,Dinners were BBQs cooked on the Weber and we used the outdoor fire pit to roast marshmallows for a S’mores dessert!,no
+26,Arrival & check-in,-0.2263,"Check in was a bit of a hastle, having to find the key and walk a few blocks to the apartment with luggage.",yes
+27,Sleep quality & noise,-0.1779,Our housemates staying courtside said noisy neighbours they could hear late into the night.,yes
+28,Sleep quality & noise,-0.1779,It a bit noisy since the host living above us.,yes
+29,Booking & communication,-0.0516,We booked this place last minute as we had issues at a previous airbnb we booked and we had to leave immediately.,no
+30,Facilities & amenities,-0.2263,"We would have liked some additional towels, but have no other quibbles.",yes
+31,Cleanliness,-0.2401,"Disappointed on the level of cleanliness and when we asked for it to be clean, the cleaner stayed for less than ten minutes and did not clean everything that we pointed out.",yes
+32,Booking & communication|Arrival & check-in|Room comfort|Location & transport,-0.6917,Views and location were great but check in was not easy & lockbox code was wrong - we had to message the host to get in.,yes
+33,Arrival & check-in|Listing accuracy,-0.4019,"When we arrived, it was exactly as it was advertised in the pictures (no nasty surprises).",no
+34,Food & dining|Listing accuracy,-0.1045,"It felt a little weird being in others space with clothes, food, photos, etc.",yes
+35,Cleanliness,-0.1759,This experience was a disaster!The clean was terrible.,yes
+36,Booking & communication|Cleanliness,-0.1967,Have not even checked in yet and was asked what time I’ll be leaving which I responded around 9 am as I was being polite but did not expect the cleaner to come right on the dot plus he did not even knock on the door to see if we’re still home.,yes
+37,Room comfort,-0.4767,I was disappointed with shower because when we used the shower water was everywhere I mean outside of the shower 🚿 .,yes
+38,Listing accuracy,-0.1611,"On the downside the photos of the outside space are not a true reflection, clearly they were taken some time ago.",yes
+39,Room comfort,-0.2732,"just a note that the shower situation is a high sided bathtub, may not be suitable for persons who are fall risks.",yes
+40,Cleanliness|Facilities & amenities,-0.8658,"No cleaning done Dirty toilet, floors, no tea towels, no cleaning products, no toilet paper other than what was left on the roll holder.",yes
+41,Facilities & amenities,-0.296,"While the kitchen exhaust was replaced with a new one in 2-3 days, after waiting for about a week for resolution of other issues, we had to buy our own mobile data, garbage bags & even a chopping board.",yes
+42,Arrival & check-in,-0.0772,Would perfer an alternative to using key passes as sometimes were hard to get to work.,yes
+43,Value for money,-0.0772,On a long weekend it was hard to get decently priced accommodation.,no
+44,Cleanliness,-0.4325,The house was big enough for our needs (up to 6 adults and a couple of kids) however the garden wasn’t useable because of the falling fruit from the tall tree in the garden and the tables and chairs were not clean for use.,yes
+45,Room comfort|Location & transport,-0.2003,Location and view is tough to beat!,no
+46,Arrival & check-in|Room comfort,-0.6249,"Overall, while this property may suit short stays, we wouldn’t recommend it for families or longer visits due to limited space, uncomfortable furnishings, and poor post-checkout comms.",yes
+47,Sleep quality & noise,-0.0531,Be aware that the sleeping area is not effectively cooled if you are staying during warmer months.,yes
+48,Arrival & check-in,-0.0516,He also allowed us to leave our lugagge for a while after checking out.,no
+49,Facilities & amenities,-0.5106,"While these rules and lack of amenities are disturbing, overall is still acceptable",yes
+50,Arrival & check-in,-0.8907,Wild vocal and abusive guest at reception didn't help our safety fears.,yes
+51,Booking & communication,-0.3182,"We accidentally booked the wrong dates and reached out to the host within a minute of confirmation, hoping to correct it.",no
+52,Room comfort,-0.5994,The only trouble we met is we found small water leaked in bathroom of bedroom when we backed from our one day trip on 2nd day.,yes
+53,Cleanliness|Room comfort|Facilities & amenities,-0.2263,"We had limited toilet paper, one tea towel and the bare minimum of cleaning products in the kitchen and bathroom.",yes
+54,Booking & communication,-0.0516,"Home was prepped with mini snacks, mini mineral water bottles in the fridge and even had a guest book for guests to doodle and leave messages.",no
+55,Sleep quality & noise,-0.1779,It could get a bit noisy at night especially over the weekend (e.g.,yes
+56,Room comfort|Food & dining,-0.296,"No toilet paper, soap or tea/coffee or air conditioner in room.",yes
+57,Room comfort,-0.1531,"It wasn't an issue for us but fyi for those who are visiting in extreme heat and cold, there's no AC in the bedroom only in the living room.",yes
+58,Cleanliness|Sleep quality & noise|Facilities & amenities,-0.5009,"The place was so messy I found a whole bunch of rubbish under the bed, stains on the floor, bed, walls, furniture and kitchen accessories.",yes
+59,Booking & communication|Arrival & check-in|Parking,-0.0516,"Still, I spent a good 10 minutes in the basement after picking up a swipe card and key at a nearby EzyMart, only to come up from the wrong building as the check-in instructions did not specify steps after parking.",yes

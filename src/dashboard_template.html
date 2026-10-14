@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Melbourne Guest Experience Insights - Voice of Guest Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  /* Always dark: black page, gold (Near Crown / emphasis) and blue (baseline) marks.
+     Mark colours validated for colour-blind separation and contrast on the #141414 card surface. */
+  .viz-root {
+    color-scheme: dark;
+    --page: #000000; --surface-1: #141414;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #8d8b85;
+    --grid: #262624; --axis: #3a3a37; --border: rgba(255,255,255,0.09);
+    --series-1: #3987e5; --series-2: #c98500;
+    --accent: #fab219; --critical: #fab219;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  header h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  header h1 span { color: var(--accent); }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+  header p { margin: 0; color: var(--text-secondary); }
+  .filters { display: flex; gap: 12px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
+  .filters label { color: var(--text-secondary); font-size: 13px; }
+  select { font: inherit; color: var(--text-primary); background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tile, .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+  .tile { padding: 16px 18px; border-top: 2px solid var(--accent); }
+  .tile .label { color: var(--text-secondary); font-size: 13px; }
+  .tile .value { font-size: 30px; font-weight: 600; margin-top: 2px; }
+  .tile .sub { color: var(--muted); font-size: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .card { padding: 18px 18px 8px; margin-top: 12px; }
+  .grid2 .card { margin-top: 0; }
+  .card h3 { margin: 0; font-size: 16px; }
+  .card .note { margin: 2px 0 6px; color: var(--text-secondary); font-size: 13px; }
+  .chart { width: 100%; }
+  h2 { font-size: 20px; margin: 40px 0 4px; padding-left: 10px; border-left: 3px solid var(--accent); }
+  h2 + p { margin: 0 0 4px; color: var(--text-secondary); }
+  details { margin: 4px 0 10px; font-size: 13px; color: var(--text-secondary); }
+  summary { cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+  th { color: var(--text-secondary); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .quotes { display: grid; gap: 8px; margin: 8px 0 12px; }
+  .quote { border-left: 2px solid var(--accent); padding: 4px 12px; color: var(--text-primary); }
+  .quote small { display: block; color: var(--muted); }
+  .recs { counter-reset: rec; list-style: none; padding: 0; margin: 8px 0; }
+  .recs li { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 10px; }
+  .recs b { display: block; color: var(--accent); }
+  .recs span { color: var(--text-secondary); }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 860px) { .tiles { grid-template-columns: 1fr 1fr; } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+<header>
+  <h1>Melbourne <span>Guest Experience</span> Insights</h1>
+  <p>A Voice of Guest analysis of <span id="nReviews"></span> written guest reviews of Melbourne short stays,
+     built the way a hotel Guest Experience team would read its own feedback. Data: Inside Airbnb, Melbourne, scraped Sep 2026.</p>
+</header>
+
+<div class="filters">
+  <label for="segment">Segment</label>
+  <select id="segment"></select>
+  <label id="windowLabel"></label>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Where in the guest journey do complaints happen?</h3>
+    <p class="note">Reviews containing a complaint about each stage, per 1,000 reviews</p>
+    <div id="journey" class="chart"></div>
+    <details><summary>Show data</summary><div id="journeyTable"></div></details>
+  </div>
+  <div class="card">
+    <h3>Which complaints to fix first</h3>
+    <p class="note">How often a complaint appears vs how much it drags down the whole review (higher = more damaging)</p>
+    <div id="priority" class="chart"></div>
+  </div>
+</div>
+
+<h2>The Crown precinct vs the rest of Melbourne</h2>
+<p>Stays within 1.5 km of Crown Melbourne (Southbank, CBD, South Wharf) compared with the rest of the city. Use the Segment filter above to see hotel-style stays.</p>
+<div class="card">
+  <h3>Complaint rate by guest-journey stage, per 1,000 reviews</h3>
+  <p class="note">Near Crown guests complain more about arrival, sleep/noise, room comfort and parking</p>
+  <div id="segments" class="chart"></div>
+  <details><summary>Show data</summary><div id="segmentsTable"></div></details>
+</div>
+<div class="grid2" style="margin-top:12px">
+  <div class="card">
+    <h3>Share of reviews with a complaint, by month</h3>
+    <p class="note">The gap between the Crown precinct and the rest of Melbourne is persistent, not a one-off</p>
+    <div id="trend" class="chart"></div>
+  </div>
+  <div class="card">
+    <h3>Guest demand by month, Crown precinct</h3>
+    <p class="note">Average reviews per month, 2024-2025. Reviews are posted just after a stay, so they track visitor demand: it builds through the spring racing season (Oct-Dec)</p>
+    <div id="demand" class="chart"></div>
+  </div>
+</div>
+
+<h2>What drives the overall star rating?</h2>
+<p>Key-driver analysis: a regression of each listing's overall rating on its six category ratings (<span id="driverN"></span> listings with 10+ reviews).</p>
+<div class="grid2">
+  <div class="card">
+    <h3>Impact on the overall rating</h3>
+    <p class="note">Standardised regression coefficient: how much the overall rating moves when a category moves</p>
+    <div id="drivers" class="chart"></div>
+    <details><summary>Show data</summary><div id="driversTable"></div></details>
+  </div>
+  <div class="card">
+    <h3>Area scorecard</h3>
+    <p class="note">Local government areas with 1,000+ reviews in the last 24 months, sorted by complaint rate</p>
+    <div id="lgaTable" style="max-height:420px;overflow:auto"></div>
+  </div>
+</div>
+
+<h2>Guest voices from the Crown precinct</h2>
+<p>Verbatim sentences from reviews of stays near Crown, selected by the analyst from a random shortlist per theme. Quotes that name people were left out.</p>
+<div class="filters"><label for="vtheme">Theme</label><select id="vtheme"></select></div>
+<div class="quotes" id="quotes"></div>
+
+<h2>Recommendations for a Guest Experience team</h2>
+<ol class="recs" id="recs"></ol>
+
+<footer>
+  Method: reviews scored with VADER sentiment (tuned for hospitality phrasing), split into sentences and tagged to 12 guest-journey themes by keyword rules;
+  a sentence scoring at or below -0.05 counts as a complaint. A manual check of 60 random complaint sentences found 45 (75%) were genuine complaints; the rest were mostly neutral context or praise the model misread.
+  Listing ratings are Airbnb's lifetime averages. Built by Dhruv Rawat - Python, pandas, scikit-learn, Plotly.
+</footer>
+</div>
+</div>
+
+<script>
+const DATA = __DATA__;
+const css = n => getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(n).trim();
+const pct = (v, d = 1) => (v * 100).toFixed(d) + '%';
+const JOURNEY = ["Booking & communication", "Arrival & check-in", "Cleanliness", "Sleep quality & noise",
+  "Room comfort", "Facilities & amenities", "Staff & hospitality", "Food & dining",
+  "Location & transport", "Parking", "Value for money", "Listing accuracy"];
+const SEG_COLOR = {"Near Crown (1.5 km)": "--series-2", "Rest of Melbourne": "--series-1"};
+const segSel = document.getElementById('segment');
+
+function baseLayout(extra = {}) {
+  return Object.assign({
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 12, color: css('--text-secondary')},
+    margin: {l: 10, r: 16, t: 8, b: 36},
+    hoverlabel: {bgcolor: css('--surface-1'), bordercolor: css('--border'), font: {color: css('--text-primary')}},
+    showlegend: false,
+  }, extra);
+}
+const axis = (extra = {}) => Object.assign({gridcolor: css('--grid'), linecolor: css('--axis'),
+  zerolinecolor: css('--axis'), tickfont: {color: css('--muted')}, automargin: true}, extra);
+const CONFIG = {displayModeBar: false, responsive: true};
+
+function table(el, rows, cols) {
+  const t = document.createElement('table');
+  const head = t.createTHead().insertRow();
+  cols.forEach(c => { const th = document.createElement('th'); th.textContent = c.label; if (c.num) th.className = 'num'; head.appendChild(th); });
+  const body = t.createTBody();
+  rows.forEach(r => { const tr = body.insertRow(); cols.forEach(c => {
+    const td = tr.insertCell(); td.textContent = c.fmt ? c.fmt(r[c.key]) : r[c.key]; if (c.num) td.className = 'num'; }); });
+  const host = document.getElementById(el); host.replaceChildren(t);
+}
+
+function themesFor(seg) {
+  const rows = DATA.themes.filter(t => t.segment === seg);
+  return JOURNEY.map(j => rows.find(r => r.theme === j));
+}
+
+function tiles(seg) {
+  const k = DATA.kpis[seg], th = themesFor(seg);
+  const top = th.reduce((a, b) => b.complaints_per_1000 > a.complaints_per_1000 ? b : a);
+  const base = DATA.kpis['All Melbourne'];
+  const diff = (k.complaint_rate / base.complaint_rate - 1);
+  const items = [
+    ['Reviews analysed', k.reviews.toLocaleString(), `${k.listings.toLocaleString()} listings`],
+    ['Average guest rating', k.avg_rating.toFixed(2) + ' / 5', 'listings with 5+ reviews'],
+    ['Reviews with a complaint', pct(k.complaint_rate),
+      seg === 'All Melbourne' ? 'even though most reviews are positive overall'
+        : `${diff >= 0 ? '+' : ''}${(diff * 100).toFixed(0)}% vs all Melbourne`],
+    ['Most common complaint', top.theme, `${top.complaints_per_1000.toFixed(1)} per 1,000 reviews`],
+  ];
+  const host = document.getElementById('tiles'); host.replaceChildren();
+  items.forEach(([l, v, s]) => {
+    const d = document.createElement('div'); d.className = 'tile';
+    [['label', l], ['value', v], ['sub', s]].forEach(([c, txt]) => {
+      const e = document.createElement('div'); e.className = c; e.textContent = txt; d.appendChild(e); });
+    if (items[3][0] === l) d.querySelector('.value').style.fontSize = '20px';
+    host.appendChild(d);
+  });
+}
+
+function journey(seg) {
+  const th = themesFor(seg).slice().reverse();
+  Plotly.react('journey', [{
+    type: 'bar', orientation: 'h', y: th.map(t => t.theme), x: th.map(t => t.complaints_per_1000),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.62,
+    text: th.map(t => t.complaints_per_1000.toFixed(1)), textposition: 'outside', cliponaxis: false,
+    textfont: {color: css('--text-secondary')},
+    customdata: th.map(t => [pct(t.mention_rate), pct(t.negative_share_of_mentions)]),
+    hovertemplate: '<b>%{x:.1f} per 1,000 reviews</b><br>%{y}<br>Mentioned in %{customdata[0]} of reviews<br>%{customdata[1]} of mentions are negative<extra></extra>',
+  }], baseLayout({height: 420, xaxis: axis({title: {text: 'complaints per 1,000 reviews', font: {size: 11}}}),
+    yaxis: axis({gridcolor: 'rgba(0,0,0,0)'}), bargap: 0.3}), CONFIG);
+  table('journeyTable', themesFor(seg), [
+    {key: 'theme', label: 'Theme'},
+    {key: 'mention_rate', label: 'Mentioned in', num: 1, fmt: v => pct(v)},
+    {key: 'complaints_per_1000', label: 'Complaints / 1,000', num: 1, fmt: v => v.toFixed(1)},
+    {key: 'negative_share_of_mentions', label: 'Negative share', num: 1, fmt: v => pct(v)},
+    {key: 'avg_review_sentiment_when_complaint', label: 'Review sentiment when complained', num: 1, fmt: v => v.toFixed(2)}]);
+}
+
+// Labels sit beside their dot; when two dots are close, one label goes above and one below.
+function labelPositions(xs, ys, xm) {
+  const xr = Math.max(...xs) - Math.min(...xs), yr = Math.max(...ys) - Math.min(...ys);
+  const pos = xs.map(x => x > xm ? 'middle left' : 'middle right');
+  for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
+    if (Math.abs(xs[i] - xs[j]) / xr < 0.25 && Math.abs(ys[i] - ys[j]) / yr < 0.06) {
+      const [hi, lo] = ys[i] >= ys[j] ? [i, j] : [j, i];
+      const side = xs[hi] > xm ? 'left' : 'right';
+      pos[hi] = 'top ' + side; pos[lo] = 'bottom ' + side;
+    }
+  }
+  return pos;
+}
+
+function priority(seg) {
+  const th = themesFor(seg);
+  const damage = t => 1 - t.avg_review_sentiment_when_complaint;
+  const xs = th.map(t => t.complaints_per_1000), ys = th.map(damage);
+  const xm = xs.reduce((a, b) => a + b) / xs.length, ym = ys.reduce((a, b) => a + b) / ys.length;
+  Plotly.react('priority', [{
+    type: 'scatter', mode: 'markers+text', x: xs, y: ys, text: th.map(t => t.theme),
+    textposition: labelPositions(xs, ys, xm),
+    textfont: {size: 11, color: css('--text-secondary')},
+    marker: {size: 12, color: xs.map((x, i) => x > xm && ys[i] > ym ? css('--series-2') : css('--series-1')),
+      line: {color: css('--surface-1'), width: 2}},
+    hovertemplate: '<b>%{text}</b><br>%{x:.1f} complaints per 1,000 reviews<br>Damage score %{y:.2f}<extra></extra>',
+  }], baseLayout({height: 420,
+    xaxis: axis({title: {text: 'how often (complaints per 1,000 reviews)', font: {size: 11}}, zeroline: false,
+      range: [Math.min(...xs) - 1.5, Math.max(...xs) + 1.5]}),
+    yaxis: axis({title: {text: 'how damaging (1 - review sentiment)', font: {size: 11}}, zeroline: false}),
+    shapes: [{type: 'line', x0: xm, x1: xm, yref: 'paper', y0: 0, y1: 1, line: {color: css('--axis'), width: 1}},
+             {type: 'line', y0: ym, y1: ym, xref: 'paper', x0: 0, x1: 1, line: {color: css('--axis'), width: 1}}],
+    annotations: [{xref: 'paper', yref: 'paper', x: 1, y: 1, xanchor: 'right', yanchor: 'top', showarrow: false,
+      text: 'Fix first: frequent and damaging (gold)', font: {size: 11, color: css('--accent')}}],
+  }), CONFIG);
+}
+
+function segments() {
+  const segs = ['Near Crown (1.5 km)', 'Rest of Melbourne'];
+  const traces = segs.map(s => {
+    const th = themesFor(s).slice().reverse();
+    return {type: 'bar', orientation: 'h', name: s, y: th.map(t => t.theme), x: th.map(t => t.complaints_per_1000),
+      marker: {color: css(SEG_COLOR[s]), cornerradius: 3, line: {color: css('--surface-1'), width: 1}},
+      hovertemplate: `<b>%{x:.1f} per 1,000</b><br>${s}<br>%{y}<extra></extra>`};
+  }).reverse();
+  Plotly.react('segments', traces, baseLayout({height: 520, barmode: 'group', bargap: 0.25, bargroupgap: 0.08,
+    showlegend: true, legend: {orientation: 'h', y: 1.06, x: 0, traceorder: 'reversed', font: {color: css('--text-secondary')}},
+    margin: {l: 10, r: 16, t: 30, b: 36},
+    xaxis: axis({title: {text: 'complaints per 1,000 reviews', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
+  const rows = JOURNEY.map(j => Object.fromEntries([['theme', j], ...segs.map(s =>
+    [s, DATA.themes.find(t => t.segment === s && t.theme === j).complaints_per_1000])]));
+  table('segmentsTable', rows, [{key: 'theme', label: 'Theme'},
+    ...segs.map(s => ({key: s, label: s, num: 1, fmt: v => v.toFixed(1)}))]);
+}
+
+function trend() {
+  const segs = ['Near Crown (1.5 km)', 'Rest of Melbourne'];
+  const traces = segs.map(s => {
+    const r = DATA.trend.filter(t => t.segment === s);
+    return {type: 'scatter', mode: 'lines', name: s, x: r.map(t => t.month), y: r.map(t => t.complaint_rate),
+      line: {color: css(SEG_COLOR[s]), width: 2}, hovertemplate: `${s}: <b>%{y:.1%}</b><extra></extra>`};
+  });
+  const ends = segs.map(s => DATA.trend.filter(t => t.segment === s).slice(-1)[0]);
+  Plotly.react('trend', traces, baseLayout({height: 320, hovermode: 'x unified', showlegend: true,
+    legend: {orientation: 'h', y: 1.12, x: 0, font: {color: css('--text-secondary')}},
+    margin: {l: 10, r: 16, t: 30, b: 36},
+    xaxis: axis({showgrid: false, showspikes: true, spikemode: 'across', spikethickness: 1, spikecolor: css('--axis'), spikedash: 'solid'}),
+    yaxis: axis({tickformat: '.0%', rangemode: 'tozero'}),
+    annotations: ends.map((e, i) => ({x: e.month, y: e.complaint_rate, text: pct(e.complaint_rate), showarrow: false,
+      xanchor: 'left', xshift: 4, font: {size: 11, color: css('--text-secondary')}}))}), CONFIG);
+}
+
+function demand() {
+  const m = DATA.event_months;
+  Plotly.react('demand', [{type: 'bar', x: m.map(r => r.month), y: m.map(r => r.avg_reviews),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.66,
+    hovertemplate: '<b>%{y:,.0f} reviews</b><br>%{x}<extra></extra>'}],
+    baseLayout({height: 320, xaxis: axis({showgrid: false}), yaxis: axis({rangemode: 'tozero'}),
+      annotations: [{x: 'Nov', y: Math.max(...m.map(r => r.avg_reviews)), text: 'Spring racing', showarrow: false, yshift: 12,
+        font: {size: 11, color: css('--text-secondary')}}]}), CONFIG);
+}
+
+function drivers() {
+  const d = DATA.drivers.slice().reverse();
+  Plotly.react('drivers', [{type: 'bar', orientation: 'h', y: d.map(r => r.driver), x: d.map(r => r.impact),
+    marker: {color: css('--series-1'), cornerradius: 4}, width: 0.6,
+    text: d.map(r => r.impact.toFixed(2)), textposition: 'outside', cliponaxis: false, textfont: {color: css('--text-secondary')},
+    customdata: d.map(r => [r.avg_score.toFixed(2), pct(r.pct_below_4_5)]),
+    hovertemplate: '<b>Impact %{x:.2f}</b><br>%{y}<br>Average score %{customdata[0]}<br>%{customdata[1]} of listings below 4.5<extra></extra>'}],
+    baseLayout({height: 320, xaxis: axis({title: {text: 'standardised impact', font: {size: 11}}}), yaxis: axis({gridcolor: 'rgba(0,0,0,0)'})}), CONFIG);
+  table('driversTable', DATA.drivers, [{key: 'driver', label: 'Category'},
+    {key: 'impact', label: 'Impact', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'correlation', label: 'Correlation', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'avg_score', label: 'Avg score', num: 1, fmt: v => v.toFixed(2)},
+    {key: 'pct_below_4_5', label: 'Listings below 4.5', num: 1, fmt: v => pct(v)}]);
+}
+
+function quotes() {
+  const sel = document.getElementById('vtheme');
+  const host = document.getElementById('quotes'); host.replaceChildren();
+  DATA.verbatims.filter(v => v.theme === sel.value).forEach(v => {
+    const d = document.createElement('div'); d.className = 'quote';
+    const q = document.createElement('div'); q.textContent = '"' + v.quote + '"';
+    const s = document.createElement('small'); s.textContent = v.type;
+    d.append(q, s); host.appendChild(d);
+  });
+}
+
+const RECS = [
+  ['Make arrival effortless in the precinct.', 'Arrival and check-in complaints are 73% higher near Crown than in the rest of Melbourne (keys, building access, lifts, finding the entrance). Map the arrival journey end to end, add clear wayfinding and pre-arrival messages, and track "arrival" complaints weekly.'],
+  ['Treat cleanliness as the first priority.', 'Cleanliness is the second-biggest driver of the overall rating, and when a guest complains about it the whole review turns sour. One in eight listings (12.3%) score below 4.5, more than for any other category. Set a room-readiness audit and close the loop on every cleanliness complaint within 24 hours.'],
+  ['Protect sleep in a busy entertainment precinct.', 'Noise and sleep complaints near Crown run at 19 per 1,000 reviews vs 14 elsewhere, and 14% of all sleep and noise mentions near Crown are negative. Room allocation (quiet floors for families and early flights), better bedding, and noise notes at booking all help.'],
+  ['Make hotel-style service consistent.', 'Hotel and serviced stays have the highest complaint rate (8.2%) and a lower average rating (4.58 vs 4.79). Staff complaints are 3x more common than in private homes and are the most damaging kind: the review turns negative overall. Service recovery training should be a VoG program priority.'],
+  ['Set accurate expectations to protect the rating.', 'Listing accuracy is the strongest driver of the overall rating, ahead of cleanliness and value. Photos, room descriptions and fees must match reality. Surprises turn into complaints about value.'],
+  ['Prepare for January.', 'January was the worst month for complaints near Crown in both years (7.7% of reviews in Jan 2025, 9.0% in Jan 2026): summer heat plus Australian Open crowds. That month, value complaints rise 57%, facilities 49%, room comfort (heat, air conditioning) 44% and cleanliness 34%. Check air conditioning before summer, staff up housekeeping for fast turnarounds, and explain event-period pricing clearly.'],
+  ['Run Voice of Guest as a closed loop.', 'Use a monthly GX scorecard: complaint rate per 1,000 reviews by journey stage, the top 3 themes and how damaging each one is, with an alert when a theme rises above its 3-month average. Every complaint gets a response and an owner, and the fixes are tracked through to the next scorecard.'],
+];
+
+function recs() {
+  const host = document.getElementById('recs');
+  RECS.forEach(([b, s]) => { const li = document.createElement('li');
+    const bb = document.createElement('b'); bb.textContent = b; const ss = document.createElement('span'); ss.textContent = s;
+    li.append(bb, ss); host.appendChild(li); });
+}
+
+function renderFiltered() { const s = segSel.value; tiles(s); journey(s); priority(s); }
+function renderAll() { renderFiltered(); segments(); trend(); demand(); drivers(); }
+
+Object.keys(DATA.kpis).forEach(s => segSel.add(new Option(s, s)));
+JOURNEY.forEach(j => document.getElementById('vtheme').add(new Option(j, j)));
+document.getElementById('vtheme').value = 'Arrival & check-in';
+document.getElementById('nReviews').textContent = DATA.meta.reviews_window.toLocaleString();
+document.getElementById('windowLabel').textContent = 'Reviews from ' + DATA.meta.window;
+document.getElementById('driverN').textContent = DATA.meta.driver_n.toLocaleString();
+table('lgaTable', DATA.lgas, [{key: 'lga', label: 'Area'},
+  {key: 'reviews_24m', label: 'Reviews', num: 1, fmt: v => v.toLocaleString()},
+  {key: 'avg_rating', label: 'Avg rating', num: 1, fmt: v => v.toFixed(2)},
+  {key: 'complaint_rate', label: 'With complaint', num: 1, fmt: v => pct(v)},
+  {key: 'top_complaint', label: 'Top complaint'}]);
+segSel.addEventListener('change', renderFiltered);
+document.getElementById('vtheme').addEventListener('change', quotes);
+recs(); quotes(); renderAll();
+</script>
+</body>
+</html>
